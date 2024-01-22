@@ -1,5 +1,7 @@
 use serde::Serialize;
 
+/// All of the required methods for instructions which have a branching effect in the target
+/// architecture.
 pub trait InstructionInfo: Serialize + Send {
     /// Returns the size of the instruction, this is **only** required for instructions which
     /// return a [`JumpKind`]. It will be ignored by the serializer otherwise.

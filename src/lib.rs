@@ -9,9 +9,12 @@ pub use instruction::InstructionInfo;
 pub use register::RegisterInfo;
 pub use tracer::Tracer;
 
+/// A module holding the [`InstructionInfo`] trait and associated items.
 pub mod instruction;
 mod listener;
+/// A module holding the [`RegisterInfo`] trait and associated items.
 pub mod register;
+/// A module holding the [`Tracer`] and associated items.
 pub mod tracer;
 
 /// The parent trait above all of its associated types which enables the ability to trace the
@@ -31,8 +34,8 @@ where
 /// All of the possible errors which could result from the tracer.
 #[derive(Debug, Error)]
 pub enum Error {
-    /// A [`Start`] effect was sent, but there wasn't a [`End`] effect to end the previous
-    /// [`Start`].
+    /// [`Effect::InsnStart`] was sent, but there wasn't a [`Effect::InsnEnd`] to end the preceding
+    /// instruction's effect(s).
     #[error("There was an attempt to send another Start effect before the previous was ended.")]
     Ordering,
 
@@ -40,7 +43,7 @@ pub enum Error {
     #[error("All of the effect senders were dropped.")]
     SendersDropped,
 
-    /// A sender failed when attempting to send an effect to the receiver.
+    /// A sender failed when attempting to send an effect to the tracing thread.
     #[error("There was an issue when sending an effect to the tracer.")]
     SendFailure,
 

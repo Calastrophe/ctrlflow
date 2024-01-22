@@ -24,32 +24,26 @@ impl<A: Architecture> EffectListener<A> {
         }
     }
 
-    /// The main listening loop which internally calls [await_start()] and [handle_effects()]
+    /// Holds the main listening loop along with the loop which awaits for a [`Effect::InsnStart`]
+    /// or [`Effect::Terminate`] to determine what to do.
     pub fn listen(&mut self) -> Result<(), Error> {
         loop {
-            self.await_start()?;
+            loop {
+                if let Some(effect) = self.read_effect()? {
+                    match effect {
+                        Effect::InsnStart(..) => {
+                            let _ = self.file.write(&bincode::serialize(&effect)?)?;
+
+                            break;
+                        }
+                        Effect::Terminate => return Ok(()),
+                        _ => {}
+                    }
+                }
+            }
 
             self.handle_effects()?;
         }
-    }
-
-    /// Constantly reads incoming effects
-    fn await_start(&mut self) -> Result<(), Error> {
-        loop {
-            if let Some(effect) = self.read_effect()? {
-                match effect {
-                    Effect::InsnStart(..) => {
-                        self.file.write(&bincode::serialize(&effect)?)?;
-
-                        break;
-                    }
-                    Effect::Terminate => break,
-                    _ => {}
-                }
-            }
-        }
-
-        Ok(())
     }
 
     /// Constantly reads every memory and register effect and appends them to a vector until the
@@ -62,19 +56,17 @@ impl<A: Architecture> EffectListener<A> {
             if let Some(effect) = self.read_effect()? {
                 match effect {
                     Effect::InsnEnd => {
-                        self.file.write(&bincode::serialize(&self.effects)?)?;
+                        let _ = self.file.write(&bincode::serialize(&self.effects)?)?;
 
                         self.effects.clear();
 
-                        break;
+                        return Ok(());
                     }
                     Effect::InsnStart(..) => return Err(Error::Ordering),
                     _ => self.effects.push(effect),
                 }
             }
         }
-
-        Ok(())
     }
 
     /// Attempts to read an [`Effect`] from the channel, only erroring in the event that all senders are dropped

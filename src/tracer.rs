@@ -10,12 +10,6 @@ use crate::{
 };
 use flume::Sender;
 
-// NOTE:
-//
-// This API definitely needs to be reviewed and ensured that it is idiomatic.
-//
-// We should certainly ask this, is our implementer smart enough not to shoot themself in the foot?
-
 /// TODO: DOCUMENTATION
 pub struct Tracer<A: Architecture> {
     tx: EffectSender<A>,
@@ -24,7 +18,10 @@ pub struct Tracer<A: Architecture> {
 
 impl<A: Architecture> Tracer<A> {
     /// Creates a new tracer which writes the log file to the given path.
-    pub fn new<P: AsRef<Path>>(path: P, init_memory: &[u8]) -> Result<Self, Error> {
+    pub fn new<'a, P: AsRef<Path>>(
+        path: P,
+        _init_memory: impl Iterator<Item = (&'a A::AddressWidth, &'a A::AddressWidth)>,
+    ) -> Result<Self, Error> {
         let (tx, rx) = flume::unbounded();
 
         let mut file = File::create(path)?;
@@ -41,7 +38,7 @@ impl<A: Architecture> Tracer<A> {
 
         let info = ArchInfo { mode, registers };
 
-        file.write(&bincode::serialize(&info)?)?;
+        let _ = file.write(&bincode::serialize(&info)?)?;
 
         let mut effect_listener: EffectListener<A> = EffectListener::new(rx, file);
 
