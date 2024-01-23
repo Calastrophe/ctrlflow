@@ -14,6 +14,19 @@ pub trait InstructionInfo: Serialize + Send {
     fn kind(&self) -> Option<JumpKind>;
 }
 
+#[derive(Serialize)]
+/// Indicates that an instruction has a branching effect in the target architecture.
+pub enum JumpKind {
+    /// The instruction calls another function.
+    Call,
+    /// The instruction returns from the current function.
+    Return,
+    /// The instruction jumps to another basic block in the function unconditionally.
+    Unconditional,
+    /// The instruction potentially jumps to another basic block or moves to next instruction.
+    Conditional,
+}
+
 /// Internally used for serializing instructions with needed size and kind types.
 #[derive(serde::Serialize)]
 pub(crate) struct Info<A: Architecture> {
@@ -35,17 +48,4 @@ impl<A: Architecture> Info<A> {
             kind,
         }
     }
-}
-
-#[derive(Serialize)]
-/// Indicates that an instruction has a branching effect in the target architecture.
-pub enum JumpKind {
-    /// The instruction calls another function.
-    Call,
-    /// The instruction returns from the current function.
-    Return,
-    /// The instruction jumps to another basic block in the function unconditionally.
-    Unconditional,
-    /// The instruction potentially jumps to another basic block or moves to next instruction.
-    Conditional,
 }
