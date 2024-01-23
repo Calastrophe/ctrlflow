@@ -53,7 +53,7 @@ pub enum Error {
     Serialization(#[from] bincode::Error),
 
     /// IO Error
-    #[error("There was an issue while creating or writing to the log file.")]
+    #[error("There was an issue while creating or writing to the trace file.")]
     IO(#[from] std::io::Error),
 }
 
@@ -61,8 +61,6 @@ pub enum Error {
 #[derive(Serialize, Debug, Clone)]
 pub enum Effect<A: Architecture> {
     /// Indicates the starting of a given instruction at a given address.
-    ///
-    /// The instruction is laid out in the graph exactly as is it is serialized.
     InsnStart(A::AddressWidth, A::Instruction),
 
     /// Indicates the end of an instruction's effects.
@@ -71,18 +69,16 @@ pub enum Effect<A: Architecture> {
     /// Signals to the tracer thread that emulation has finished and to wrap up work.
     Terminate,
 
-    /// Indicates a read has taken place for the given register.
+    /// Indicates that a register read has taken place for a given register.
     RegRead(A::Register),
 
-    /// Indicates a write has taken place at a given register with a bytearray, serializes the
-    /// value which was written as a bytearray in the log.
+    /// Indicates that a register write has taken place for a given register.
     RegWrite(A::Register, Box<[u8]>),
 
-    /// Indicates that a read has taken place at a given memory address.
+    /// Indicates that a memory read has taken place at a given memory address.
     MemRead(A::AddressWidth),
 
-    /// Indicates that a write has taken place at a given memory address with a bytearray,
-    /// serializes the value which was written as a bytearray in the log.
+    /// Indicates that a memory write has taken place at a given memory address.
     MemWrite(A::AddressWidth, Box<[u8]>),
 }
 

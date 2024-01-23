@@ -16,7 +16,7 @@ pub struct EffectListener<A: Architecture> {
 }
 
 impl<A: Architecture> EffectListener<A> {
-    /// Creates a new listener with the provided receiver and creates a handle to the log file.
+    /// Creates a new listener with the provided receiver and creates a handle to the trace file.
     pub fn new(receiver: Receiver<Effect<A>>, file: File) -> Self {
         Self {
             receiver,

@@ -22,7 +22,7 @@ where
     name: &'static str,
     /// The register's enum variant.
     register: R,
-    /// The base register of the register.
+    /// The base register of the register's set.
     base: R,
     /// The full register of the register, if it has one.
     full_register: Option<R>,

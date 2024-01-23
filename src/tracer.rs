@@ -11,14 +11,16 @@ use crate::{
 use bincode::serialize_into;
 use flume::Sender;
 
-/// TODO: DOCUMENTATION
+/// The actual tracer which can is generic over any type which implements [`Architecture`],
+/// allowing it to set up a trace file and be ready for effects specific to the target
+/// architecture.
 pub struct Tracer<A: Architecture> {
     tx: EffectSender<A>,
     handle: JoinHandle<Result<(), Error>>,
 }
 
 impl<A: Architecture> Tracer<A> {
-    /// Creates a new tracer which writes the log file to the given path.
+    /// Creates a new tracer which writes a trace file to the given path.
     pub fn new<'a, P: AsRef<Path>>(
         path: P,
         init_mem: impl Iterator<Item = (&'a A::AddressWidth, &'a A::AddressWidth)>,
@@ -29,7 +31,7 @@ impl<A: Architecture> Tracer<A> {
 
         populate_arch_info::<A>(&mut file)?;
 
-        // Write the initial memory to the log file.
+        // Write the initial memory to the trace file.
         for pair in init_mem {
             serialize_into(&mut file, &pair)?
         }
@@ -81,7 +83,7 @@ impl<A: Architecture> EffectSender<A> {
     }
 }
 
-/// Populate the architecture information into the log file.
+/// Populate the architecture information into the trace file.
 fn populate_arch_info<A: Architecture>(file: &mut File) -> Result<(), Error> {
     #[derive(serde::Serialize)]
     struct ArchInfo<R: RegisterInfo> {
