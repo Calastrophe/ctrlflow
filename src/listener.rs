@@ -1,7 +1,8 @@
+use crate::instruction::Info;
 use crate::{Architecture, Effect, Error};
+use bincode::serialize_into;
 use flume::{Receiver, TryRecvError};
 use std::fs::File;
-use std::io::Write;
 
 /// The main workhorse for the [`crate::Tracer`], lives on a separate thread awaiting effects being sent
 /// over a channel.
@@ -31,8 +32,9 @@ impl<A: Architecture> EffectListener<A> {
             loop {
                 if let Some(effect) = self.read_effect()? {
                     match effect {
-                        Effect::InsnStart(..) => {
-                            let _ = self.file.write(&bincode::serialize(&effect)?)?;
+                        Effect::InsnStart(addr, insn) => {
+                            let info = Info::<A>::new(addr, insn);
+                            serialize_into(&mut self.file, &info)?;
 
                             break;
                         }
@@ -56,7 +58,7 @@ impl<A: Architecture> EffectListener<A> {
             if let Some(effect) = self.read_effect()? {
                 match effect {
                     Effect::InsnEnd => {
-                        let _ = self.file.write(&bincode::serialize(&self.effects)?)?;
+                        serialize_into(&mut self.file, &self.effects)?;
 
                         self.effects.clear();
 

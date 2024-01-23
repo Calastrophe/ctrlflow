@@ -33,7 +33,7 @@ enum Register {
 
 struct Registers {
     registers: [u64; 2],
-    tx: EffectSender<Effect<Arch>>,
+    tx: EffectSender<Arch>,
 }
 
 impl Registers {

@@ -1,13 +1,14 @@
+use std::fs::File;
 use std::path::Path;
 use std::thread;
 use std::thread::JoinHandle;
-use std::{fs::File, io::Write};
 
 use crate::{
     listener::EffectListener,
     register::{Info, RegisterInfo},
     AddressMode, Architecture, Effect, Error,
 };
+use bincode::serialize_into;
 use flume::Sender;
 
 /// TODO: DOCUMENTATION
@@ -20,25 +21,18 @@ impl<A: Architecture> Tracer<A> {
     /// Creates a new tracer which writes the log file to the given path.
     pub fn new<'a, P: AsRef<Path>>(
         path: P,
-        _init_memory: impl Iterator<Item = (&'a A::AddressWidth, &'a A::AddressWidth)>,
+        init_mem: impl Iterator<Item = (&'a A::AddressWidth, &'a A::AddressWidth)>,
     ) -> Result<Self, Error> {
         let (tx, rx) = flume::unbounded();
 
         let mut file = File::create(path)?;
 
-        #[derive(serde::Serialize)]
-        struct ArchInfo<R: RegisterInfo> {
-            mode: u8,
-            registers: Vec<&'static Info<R>>,
+        populate_arch_info::<A>(&mut file)?;
+
+        // Write the initial memory to the log file.
+        for pair in init_mem {
+            serialize_into(&mut file, &pair)?
         }
-
-        let mode = A::AddressWidth::mode();
-
-        let registers: Vec<_> = A::Register::iter().map(|r| r.info()).collect();
-
-        let info = ArchInfo { mode, registers };
-
-        let _ = file.write(&bincode::serialize(&info)?)?;
 
         let mut effect_listener: EffectListener<A> = EffectListener::new(rx, file);
 
@@ -85,4 +79,23 @@ impl<A: Architecture> EffectSender<A> {
     pub fn inner_sender(&self) -> &Sender<Effect<A>> {
         &self.0
     }
+}
+
+/// Populate the architecture information into the log file.
+fn populate_arch_info<A: Architecture>(file: &mut File) -> Result<(), Error> {
+    #[derive(serde::Serialize)]
+    struct ArchInfo<R: RegisterInfo> {
+        mode: u8,
+        registers: Vec<&'static Info<R>>,
+    }
+
+    let mode = A::AddressWidth::mode();
+
+    let registers: Vec<_> = A::Register::iter().map(|r| r.info()).collect();
+
+    let info = ArchInfo { mode, registers };
+
+    let _ = serialize_into(file, &info)?;
+
+    Ok(())
 }
