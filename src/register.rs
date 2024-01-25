@@ -20,7 +20,7 @@ where
 {
     /// The name which you want to be displayed in interface.
     name: &'static str,
-    /// The register's enum variant.
+    /// The register's individual enum variant.
     register: R,
     /// The base register of the register's set.
     base: R,

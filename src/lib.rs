@@ -34,7 +34,7 @@ where
 /// All of the possible errors which could result from the tracer.
 #[derive(Debug, Error)]
 pub enum Error {
-    /// [`Effect::InsnStart`] was sent, but there wasn't a [`Effect::InsnEnd`] to end the preceding
+    /// [`Event::InsnStart`] was sent, but there wasn't a [`Event::InsnEnd`] to end the preceding
     /// instruction's effect(s).
     #[error("There was an attempt to send another Start effect before the previous was ended.")]
     Ordering,
@@ -59,7 +59,7 @@ pub enum Error {
 
 /// All of the given effects that can be communicated from the main emulator thread.
 #[derive(Serialize, Debug, Clone)]
-pub enum Effect<A: Architecture> {
+pub enum Event<A: Architecture> {
     /// Indicates the starting of a given instruction at a given address.
     InsnStart(A::AddressWidth, A::Instruction),
 

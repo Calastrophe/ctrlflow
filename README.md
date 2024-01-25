@@ -1,14 +1,14 @@
-## What is ctrl-flow?
+## What is ctrlflow?
 
-**ctrl-flow** is an **experimental** architecture agnostic tracing library for emulators.
+**ctrlflow** is an **experimental** architecture agnostic tracing library for emulators.
 
-Rather than requiring the user to implement their architecture's instruction semantics in this library, we take the approach of passing an `Effect` type over a channel.
+Rather than requiring the user to implement their architecture's instruction semantics in this library, we take the approach of passing an `Event` type over a channel.
 
-An `Effect` is broken down as such,
+An `Event` is broken down as such,
 
 ```rs
 
-enum Effect<A :Architecture> {
+enum Event<A :Architecture> {
     InsnStart(A::AddressWidth, A::Instruction),
     InsnEnd,
     Terminate,
@@ -33,17 +33,17 @@ enum Register {
 
 struct Registers {
     registers: [u64; 2],
-    tx: EffectSender<Arch>,
+    tx: EventSender<Arch>,
 }
 
 impl Registers {
     fn read(&self, reg: Register) -> u64 {
-        self.tx.send(Effect::RegRead(reg));
+        self.tx.send(Event::RegRead(reg));
         self.registers[reg as usize];
     }
 
     fn write(&mut self, reg: Register, val: u64) -> u64 {
-        self.tx.send(Effect::RegWrite(reg, Box::from(val.to_le_bytes())));
+        self.tx.send(Event::RegWrite(reg, Box::from(val.to_le_bytes())));
         self.registers[reg as usize] = val;
     }
 }
