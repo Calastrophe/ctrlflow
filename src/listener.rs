@@ -1,5 +1,5 @@
 use crate::instruction::Info;
-use crate::{Architecture, Event, Error};
+use crate::{Architecture, Error, Event};
 use bincode::serialize_into;
 use flume::{Receiver, TryRecvError};
 use std::fs::File;
@@ -10,8 +10,13 @@ use std::fs::File;
 /// This is responsible for handling all of the event logic along with serializing and logging said
 /// events when the instruction has finished.
 pub struct EventListener<A: Architecture> {
+    /// The internal receiver which listens for events.
     receiver: Receiver<Event<A>>,
+    /// The handle to the trace file.
     file: File,
+    /// The current instruction being executed by the target architecture.
+    insn: Option<(A::AddressWidth, A::Instruction)>,
+    /// Holds all the events for the current instruction.
     events: Vec<Event<A>>,
 }
 
@@ -21,6 +26,7 @@ impl<A: Architecture> EventListener<A> {
         Self {
             receiver,
             file,
+            insn: None,
             events: Vec::new(),
         }
     }
@@ -33,8 +39,7 @@ impl<A: Architecture> EventListener<A> {
                 if let Some(event) = self.read_event()? {
                     match event {
                         Event::InsnStart(addr, insn) => {
-                            let info = Info::<A>::new(addr, insn);
-                            serialize_into(&mut self.file, &info)?;
+                            self.insn = Some((addr, insn));
 
                             break;
                         }
@@ -58,7 +63,16 @@ impl<A: Architecture> EventListener<A> {
             if let Some(event) = self.read_event()? {
                 match event {
                     Event::InsnEnd => {
-                        serialize_into(&mut self.file, &self.events)?;
+                        // NOTE: It is guaranteed that this should be Some to get to this point.
+                        self.insn
+                            .take()
+                            .map(|(addr, insn)| {
+                                let _ = serialize_into(
+                                    &mut self.file,
+                                    &Info::new(addr, insn, &self.events),
+                                );
+                            })
+                            .unwrap_or_else(|| unreachable!());
 
                         self.events.clear();
 

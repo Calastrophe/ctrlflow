@@ -21,7 +21,7 @@ pub mod tracer;
 /// given architecture.
 pub trait Architecture
 where
-    Self: Clone + Sized + 'static,
+    Self: Serialize + Clone + Sized + 'static,
 {
     /// The associated register type of the architecture
     type Register: RegisterInfo;

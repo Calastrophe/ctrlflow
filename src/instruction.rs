@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::Architecture;
+use crate::{Architecture, Event};
 
 /// All of the required methods for instructions which have a branching effect in the target
 /// architecture.
@@ -29,15 +29,16 @@ pub enum JumpKind {
 
 /// Internally used for serializing instructions with needed size and kind types.
 #[derive(serde::Serialize)]
-pub(crate) struct Info<A: Architecture> {
+pub(crate) struct Info<'a, A: Architecture> {
     addr: A::AddressWidth,
     insn: A::Instruction,
     size: Option<u16>,
     kind: Option<JumpKind>,
+    events: &'a [Event<A>],
 }
 
-impl<A: Architecture> Info<A> {
-    pub fn new(addr: A::AddressWidth, insn: A::Instruction) -> Self {
+impl<'a, A: Architecture> Info<'a, A> {
+    pub fn new(addr: A::AddressWidth, insn: A::Instruction, events: &'a [Event<A>]) -> Self {
         let size = insn.size();
         let kind = insn.kind();
 
@@ -46,6 +47,7 @@ impl<A: Architecture> Info<A> {
             insn,
             size,
             kind,
+            events,
         }
     }
 }
