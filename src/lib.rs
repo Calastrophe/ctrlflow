@@ -5,8 +5,8 @@
 use serde::Serialize;
 use thiserror::Error;
 
-pub use instruction::InstructionInfo;
-pub use register::RegisterInfo;
+pub use instruction::InsnInfo;
+pub use register::RegInfo;
 pub use tracer::Tracer;
 
 /// A module holding the [`InstructionInfo`] trait and associated items.
@@ -24,9 +24,11 @@ where
     Self: Serialize + Clone + Sized + 'static,
 {
     /// The associated register type of the architecture
-    type Register: RegisterInfo;
+    type Register: RegInfo;
+
     /// The associated instruction type of the architecture
-    type Instruction: InstructionInfo;
+    type Instruction: InsnInfo;
+
     /// The address width of the architecture
     type AddressWidth: AddressMode;
 }

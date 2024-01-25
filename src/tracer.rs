@@ -5,7 +5,7 @@ use std::thread::JoinHandle;
 
 use crate::{
     listener::EventListener,
-    register::{Info, RegisterInfo},
+    register::{Info, RegInfo},
     AddressMode, Architecture, Error, Event,
 };
 use bincode::serialize_into;
@@ -86,7 +86,7 @@ impl<A: Architecture> EventSender<A> {
 /// Populate the architecture information into the trace file.
 fn populate_arch_info<A: Architecture>(file: &mut File) -> Result<(), Error> {
     #[derive(serde::Serialize)]
-    struct ArchInfo<R: RegisterInfo> {
+    struct ArchInfo<R: RegInfo> {
         mode: u8,
         registers: Vec<&'static Info<R>>,
     }

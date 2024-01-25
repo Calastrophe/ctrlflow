@@ -1,7 +1,7 @@
 use serde::Serialize;
 
 /// A trait which is required for each register in the target architecture to implement.
-pub trait RegisterInfo
+pub trait RegInfo
 where
     Self: Serialize + Send + Copy + Sized + 'static,
 {
