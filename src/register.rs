@@ -3,7 +3,7 @@ use serde::Serialize;
 /// A trait which is required for each register in the target architecture to implement.
 pub trait RegInfo
 where
-    Self: Serialize + Send + Copy + Sized + 'static,
+    Self: Serialize + Send + Copy + 'static,
 {
     /// Returns a reference to the unique [`Info`] struct for the given register.
     fn info(&self) -> &'static Info<Self>;
