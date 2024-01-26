@@ -104,4 +104,3 @@ impl_address_mode!(u8, 1);
 impl_address_mode!(u16, 2);
 impl_address_mode!(u32, 4);
 impl_address_mode!(u64, 8);
-impl_address_mode!(u128, 16);

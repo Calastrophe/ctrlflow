@@ -31,10 +31,7 @@ impl<A: Architecture> Tracer<A> {
 
         populate_arch_info::<A>(&mut file)?;
 
-        // Write the initial memory to the trace file.
-        for pair in init_mem {
-            serialize_into(&mut file, &pair)?
-        }
+        serialize_into(&mut file, &Vec::from_iter(init_mem))?;
 
         let mut event_listener: EventListener<A> = EventListener::new(rx, file);
 
