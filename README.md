@@ -35,9 +35,15 @@ Then, all the information gathered will be serialized and logged into the trace 
 
 ## What are the future goals?
 
-The future goal of this project is to largely build up tooling to have something similar to [QIRA](https://github.com/geohot/qira) and focus on one specific emulator.
+The future goal of this project is to largely build up tooling to have something similar to [QIRA](https://github.com/geohot/qira) and focus on one specific emulator (not strictly QEMU).
 
-However, with the current limitations of the QEMU plugin system, it would require a manual patch of the source in QEMU.
+However, due to the current limitations of the QEMU plugin system, which restrict the ability to see exact values written to a specific address or register, it would require a custom version of QEMU.
 
-Another key feature would be to detect loops, these can quickly fill useless effects into trace files. ( This is possible, just takes a bit of analysis. )
+Another option, which is the ideal solution, involves leveraging [SLEIGH](https://grant-h.github.io/docs/ghidra/decompiler/sleigh.html) which allows for individual processor instructions to be translated into [p-code operations](https://spinsel.dev/assets/2020-06-17-ghidra-brainfuck-processor-1/ghidra_docs/language_spec/html/pcoderef.html).
+
+Which in turn, such p-code operations are ran in an interpreter, which emulate the target architecture environment.
+
+There are some emulators which do this already, such as [icicle-emu](https://github.com/icicle-emu/icicle-emu), but they are largely immature in their implementation and allowing of instrumentation.
+
+
 
