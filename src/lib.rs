@@ -52,7 +52,7 @@ pub enum Error {
     /// An issue was encountered when serializing the effects or storing the architecture
     /// information.
     #[error("There was an issue serializing an effect.")]
-    Serialization(#[from] bincode::Error),
+    Serialization(#[from] serde_json::Error),
 
     /// IO Error
     #[error("There was an issue while creating or writing to the trace file.")]
@@ -81,7 +81,7 @@ pub enum Event<A: Architecture> {
     MemRead(A::AddressWidth),
 
     /// Indicates that a memory write has taken place at a given memory address.
-    MemWrite(A::AddressWidth, Box<[u8]>),
+    MemWrite(A::AddressWidth, A::AddressWidth),
 }
 
 /// Determines the size of memory addresses for the given architecture in bytes.

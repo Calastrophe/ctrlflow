@@ -1,4 +1,5 @@
 use std::fs::File;
+use std::io::Write;
 use std::path::Path;
 use std::thread;
 use std::thread::JoinHandle;
@@ -8,8 +9,8 @@ use crate::{
     register::{Info, RegInfo},
     AddressMode, Architecture, Error, Event,
 };
-use bincode::serialize_into;
 use flume::Sender;
+use serde_json::to_writer_pretty;
 
 /// The actual tracer which can is generic over any type which implements [`Architecture`],
 /// allowing it to set up a trace file and be ready for events specific to the target
@@ -29,9 +30,28 @@ impl<A: Architecture> Tracer<A> {
 
         let mut file = File::create(path)?;
 
-        populate_arch_info::<A>(&mut file)?;
+        #[derive(serde::Serialize)]
+        struct ArchInfo<'a, A: AddressMode, R: RegInfo> {
+            mode: u8,
+            registers: Vec<&'static Info<R>>,
+            memory: Vec<(&'a A, &'a A)>,
+        }
 
-        serialize_into(&mut file, &Vec::from_iter(init_mem))?;
+        let mode = A::AddressWidth::mode();
+
+        let registers: Vec<_> = A::Register::iter().map(|r| r.info()).collect();
+
+        let _ = file.write(b"{\n\"info\": ")?;
+
+        let info = ArchInfo {
+            mode,
+            registers,
+            memory: Vec::from_iter(init_mem),
+        };
+
+        let _ = to_writer_pretty(&file, &info)?;
+
+        let _ = file.write(b",\n\"instructions\": [\n")?;
 
         let mut event_listener: EventListener<A> = EventListener::new(rx, file);
 
@@ -78,23 +98,4 @@ impl<A: Architecture> EventSender<A> {
     pub fn inner_sender(&self) -> &Sender<Event<A>> {
         &self.0
     }
-}
-
-/// Populate the architecture information into the trace file.
-fn populate_arch_info<A: Architecture>(file: &mut File) -> Result<(), Error> {
-    #[derive(serde::Serialize)]
-    struct ArchInfo<R: RegInfo> {
-        mode: u8,
-        registers: Vec<&'static Info<R>>,
-    }
-
-    let mode = A::AddressWidth::mode();
-
-    let registers: Vec<_> = A::Register::iter().map(|r| r.info()).collect();
-
-    let info = ArchInfo { mode, registers };
-
-    let _ = serialize_into(file, &info)?;
-
-    Ok(())
 }

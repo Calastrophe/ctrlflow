@@ -1,8 +1,9 @@
 use crate::instruction::Info;
 use crate::{Architecture, Error, Event};
-use bincode::serialize_into;
 use flume::{Receiver, TryRecvError};
+use serde_json::to_writer_pretty;
 use std::fs::File;
+use std::io::{Seek, SeekFrom, Write};
 
 /// The main workhorse for the [`crate::Tracer`], lives on a separate thread awaiting events being sent
 /// over a channel.
@@ -43,7 +44,13 @@ impl<A: Architecture> EventListener<A> {
 
                             break;
                         }
-                        Event::Terminate => return Ok(()),
+                        Event::Terminate => {
+                            // We need to overwrite the trailing comma...
+                            let _ = self.file.seek(SeekFrom::End(-2));
+
+                            let _ = self.file.write(b"]\n}")?;
+                            return Ok(());
+                        }
                         _ => {}
                     }
                 }
@@ -67,12 +74,14 @@ impl<A: Architecture> EventListener<A> {
                         self.insn
                             .take()
                             .map(|(addr, insn)| {
-                                let _ = serialize_into(
+                                let _ = to_writer_pretty(
                                     &mut self.file,
                                     &Info::new(addr, insn, &self.events),
                                 );
                             })
                             .unwrap_or_else(|| unreachable!());
+
+                        let _ = self.file.write(b",\n")?;
 
                         self.events.clear();
 
