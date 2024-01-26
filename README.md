@@ -1,13 +1,18 @@
 ## What is ctrlflow?
 
-**ctrlflow** is an **experimental** architecture agnostic tracing library for emulators.
+**ctrlflow** is an **experimental "proof-of-concept"** architecture agnostic tracing library for emulators.
 
-Rather than requiring the user to implement their architecture's instruction semantics in this library, we take the approach of passing an `Event` type over a channel.
+This library aims to provide an intuitive framework to easily create trace files for the user's target architecture.
 
-An `Event` is broken down as such,
+These trace files in turn can be dropped into a separate tool which parses it and provides *timeless* debugging functionality.
+
+## How does it work?
+
+There is another thread, separate from the emulator, which is constantly listening on a channel which use events as messages.
+
+These events are broken down as such,
 
 ```rs
-
 enum Event<A :Architecture> {
     InsnStart(A::AddressWidth, A::Instruction),
     InsnEnd,
@@ -15,42 +20,24 @@ enum Event<A :Architecture> {
     RegRead(A::Register),
     RegWrite(A::Register, Box<[u8]>),
     MemRead(A::AddressWidth),
-    MemWrite(A::AddressWidth, Box<[u8]>),
+    MemWrite(A::AddressWidth, A::AddressWidth),
 }
-
 ```
 
-The read and write effects are sent from the target emulator's assumed wrapper type for registers and memory.
+Essentially, the tracer thread is awaiting an `InsnStart` then starts recording effects.
 
-So, a short and primitive example would look like,
+These effects are restricted to register and memory read/writes which are sent from the emulator's assumed wrapper type for registers and memory.
 
-```rs
+Once the instruction has finished executing, the emulator signals to the tracer that by sending `InsnEnd` over the channel.
 
-enum Register {
-    R0,
-    R1
-}
-
-struct Registers {
-    registers: [u64; 2],
-    tx: EventSender<Arch>,
-}
-
-impl Registers {
-    fn read(&self, reg: Register) -> u64 {
-        self.tx.send(Event::RegRead(reg));
-        self.registers[reg as usize];
-    }
-
-    fn write(&mut self, reg: Register, val: u64) -> u64 {
-        self.tx.send(Event::RegWrite(reg, Box::from(val.to_le_bytes())));
-        self.registers[reg as usize] = val;
-    }
-}
-
-```
-
-This example is incredibly simple, but we leave it up to the implementer to determine how they want it structured - it could be either as complicated or simple as you want.
+Then, all the information gathered will be serialized and logged into the trace file for later analysis by an external tool.
 
 
+## What are the future goals?
+
+The future goal of this project is to largely build up tooling to have something similar to [QIRA](https://github.com/geohot/qira) and focus on one specific emulator.
+
+However, with the current limitations of the QEMU plugin system, it would require a manual patch of the source in QEMU.
+
+Another key feature would be to detect loops, these can quickly fill useless effects into trace files. ( This is possible, just takes a bit of analysis. )
 
