@@ -32,19 +32,15 @@ impl<A: Architecture> Tracer<A> {
 
         #[derive(serde::Serialize)]
         struct ArchInfo<'a, A: AddressMode, R: RegInfo> {
-            mode: u8,
             registers: Vec<&'static Info<R>>,
             memory: Vec<(&'a A, &'a A)>,
         }
-
-        let mode = A::AddressWidth::mode();
 
         let registers: Vec<_> = A::Register::iter().map(|r| r.info()).collect();
 
         let _ = file.write(b"{\n\"info\": ")?;
 
         let info = ArchInfo {
-            mode,
             registers,
             memory: Vec::from_iter(init_mem),
         };

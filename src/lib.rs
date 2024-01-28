@@ -85,18 +85,11 @@ pub enum Event<A: Architecture> {
 }
 
 /// Determines the size of memory addresses for the given architecture in bytes.
-pub trait AddressMode: Serialize + Send {
-    /// Returns the addressing mode size in bytes.
-    fn mode() -> u8;
-}
+pub trait AddressMode: Serialize + Send {}
 
 macro_rules! impl_address_mode {
     ($type: ty, $size: expr) => {
-        impl AddressMode for $type {
-            fn mode() -> u8 {
-                $size
-            }
-        }
+        impl AddressMode for $type {}
     };
 }
 

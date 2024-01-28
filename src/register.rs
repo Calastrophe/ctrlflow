@@ -22,8 +22,6 @@ where
     name: &'static str,
     /// The register's individual enum variant.
     register: R,
-    /// The base register of the register's set.
-    base: R,
     /// The full register of the register, if it has one.
     full_register: Option<R>,
     /// The size **in bytes** of a register.
@@ -35,17 +33,10 @@ where
     R: Serialize + Send + Copy,
 {
     /// Creates a new instance.
-    pub const fn new(
-        name: &'static str,
-        register: R,
-        base: R,
-        full_register: Option<R>,
-        size: u16,
-    ) -> Self {
+    pub const fn new(name: &'static str, register: R, full_register: Option<R>, size: u16) -> Self {
         Self {
             name,
             register,
-            base,
             full_register,
             size,
         }
